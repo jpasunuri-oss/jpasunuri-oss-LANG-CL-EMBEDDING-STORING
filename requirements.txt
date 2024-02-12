@@ -1,0 +1,9 @@
+pypdf2
+langchain
+python-dotenv
+huggingface_hub
+transformers
+jinja2
+langchain-community
+sentence-transformers
+faiss-cpu
