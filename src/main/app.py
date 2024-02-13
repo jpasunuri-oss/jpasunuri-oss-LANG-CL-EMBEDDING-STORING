@@ -11,9 +11,14 @@ from langchain.memory import ConversationBufferMemory
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from PyPDF2 import PdfReader
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceHubEmbeddings
 from langchain_community.llms.huggingface_endpoint import HuggingFaceEndpoint
+from langchain.schema import Document
 
+from dotenv import load_dotenv
+
+# Load dot_env 
+load_dotenv()
 
 # ------------------------------------------------------------------------------
 # TODO Functions - Implement the logic as per instructions
@@ -41,7 +46,22 @@ def get_pdf_text(pdf_path: str) -> str:
     string: Text extracted from the PDF document.
     """
     # Implement your code here
-    raise NotImplementedError("This function is not yet implemented.")
+    try:
+        reader = PdfReader(pdf_path)
+    except OSError:
+        raise FileNotFoundError(pdf_path, "Not Found")
+
+    text = ''
+    number_of_pages = len(reader.pages)
+    #print("number_of_pages", number_of_pages)
+    for pagenumber in range(number_of_pages):
+        page = reader.pages[pagenumber]
+        pagetext = page.extract_text()
+        #print("Page Text", pagetext)
+        if pagetext:
+            text = text + pagetext + '\n'
+    
+    return text
 
 
 def get_text_chunks(raw_text: str) -> List[str]:
@@ -66,7 +86,16 @@ def get_text_chunks(raw_text: str) -> List[str]:
     list of strings: The text split into manageable chunks.
     """
     # Implement your code here
-    raise NotImplementedError("This function is not yet implemented.")
+    splitter = CharacterTextSplitter(
+        separator = '\n',
+        chunk_size = 1000,
+        chunk_overlap = 0,
+        length_function = len
+    )
+    
+    split_text = splitter.split_text(raw_text)
+    #print(split_text)
+    return split_text
 
 
 def get_vector_store(text_chunks: List[str]) -> FAISS:
@@ -88,7 +117,11 @@ def get_vector_store(text_chunks: List[str]) -> FAISS:
     FAISS: A FAISS vector store containing the embeddings of the text chunks.
     """
     # Implement your code here
-    raise NotImplementedError("This function is not yet implemented.")
+    hf_embeddings = HuggingFaceHubEmbeddings(model=os.getenv('EMBEDDINGMODEL_URL'), huggingfacehub_api_token=os.getenv('HF_TOKEN'))
+
+    vector_store = FAISS.from_documents([Document(page_content=text) for text in text_chunks], hf_embeddings)
+
+    return vector_store
 
 
 def get_conversation_chain(vector_store: FAISS) -> BaseConversationalRetrievalChain:
@@ -169,9 +202,10 @@ def main():
     vector_store = get_vector_store(text_chunks)
 
     # Create a conversation chain
-    conversation_chain = get_conversation_chain(vector_store)
+    #conversation_chain = get_conversation_chain(vector_store)
 
     # Example conversation loop
+    """
     while True:
         clear_screen()
         user_input = input("Ask a question about the PDF (or type 'exit' to stop): ")
@@ -180,7 +214,7 @@ def main():
         response = conversation_chain({"question": user_input})
         print(f"\nResponse: {response.get('answer', 'No response generated.')}")
         input("\nPress Enter to continue...")
-
+    """
 
 if __name__ == "__main__":
     main()

@@ -5,6 +5,10 @@ from langchain_community.llms.huggingface_endpoint import HuggingFaceEndpoint
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
+from dotenv import load_dotenv
+
+# Load dot_env 
+load_dotenv()
 
 token = os.environ['HF_TOKEN'] # Ideally, we have this token set. Otherwise, replace with hardcoded HF token.
 API_URL = os.environ['LLM_ENDPOINT']
@@ -19,6 +23,7 @@ You are a pirate chatbot who always responds with Arr!</s>
 
 llm = HuggingFaceEndpoint(
         endpoint_url=API_URL,
+        huggingfacehub_api_token=token,
         task="text2text-generation",
         model_kwargs={
             "max_new_tokens": 200
